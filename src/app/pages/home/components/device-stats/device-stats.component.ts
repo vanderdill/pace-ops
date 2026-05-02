@@ -1,6 +1,7 @@
 import { Component, Input, ViewChild, ElementRef, OnDestroy, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Chart, registerables } from 'chart.js';
+import { Chart, registerables, TooltipItem } from 'chart.js';
+import { DeviceMonthlyDistribution } from '../../utils/device-monthly-stats.util';
 
 Chart.register(...registerables);
 
@@ -10,8 +11,8 @@ Chart.register(...registerables);
   imports: [CommonModule],
   template: `
     <div class="bg-card-bg p-8 rounded-3xl border border-white/5 h-full flex flex-col">
-      <h3 class="text-xl font-bold mb-6">Activities by Device</h3>
-      <div class="relative flex-1 min-h-[300px]">
+      <h3 class="text-xl font-bold mb-6">Device Usage Trends</h3>
+      <div class="relative flex-1 min-h-[400px]">
         <canvas #deviceChart></canvas>
       </div>
     </div>
@@ -29,10 +30,10 @@ export class DeviceStatsComponent implements AfterViewInit, OnDestroy {
 
   private chart?: Chart;
 
-  private _data: { name: string; count: number }[] = [];
+  private _data?: DeviceMonthlyDistribution;
 
   public ngAfterViewInit(): void {
-    if (this._data.length > 0) {
+    if (this._data) {
       this.updateChart(this._data);
     }
   }
@@ -44,19 +45,19 @@ export class DeviceStatsComponent implements AfterViewInit, OnDestroy {
   }
 
   @Input()
-  public set data(value: { name: string; count: number }[]) {
+  public set data(value: DeviceMonthlyDistribution) {
     this._data = value;
     if (this.deviceChartCanvas) {
       this.updateChart(value);
     }
   }
 
-  public get data(): { name: string; count: number }[] {
-    return this._data;
+  public get data(): DeviceMonthlyDistribution {
+    return this._data!;
   }
 
-  private updateChart(data: { name: string; count: number }[]): void {
-    if (!this.deviceChartCanvas) return;
+  private updateChart(data: DeviceMonthlyDistribution): void {
+    if (!this.deviceChartCanvas || !data) return;
 
     const ctx = this.deviceChartCanvas.nativeElement.getContext('2d');
     if (!ctx) return;
@@ -78,25 +79,27 @@ export class DeviceStatsComponent implements AfterViewInit, OnDestroy {
       '#FF69B4', // Hot Pink
       '#32CD32', // Lime Green
       '#1E90FF', // Dodger Blue
+      '#FF9800', // Deep Orange
+      '#009688', // Teal
     ];
 
+    const labels = data.months.map(m => this.formatMonth(m));
+
     this.chart = new Chart(ctx, {
-      type: 'doughnut',
+      type: 'bar',
       data: {
-        labels: data.map(d => d.name),
-        datasets: [{
-          data: data.map(d => d.count),
-          backgroundColor: colors,
+        labels: labels,
+        datasets: data.devices.map((device, index) => ({
+          label: device.name,
+          data: device.data,
+          backgroundColor: colors[index % colors.length],
           borderColor: cardBgColor,
-          borderWidth: 4,
-          hoverOffset: 15,
-          spacing: 5
-        }]
+          borderWidth: 1,
+        }))
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        cutout: '70%',
         plugins: {
           legend: {
             position: 'bottom',
@@ -107,7 +110,7 @@ export class DeviceStatsComponent implements AfterViewInit, OnDestroy {
               pointStyle: 'circle',
               font: {
                 family: 'Inter, sans-serif',
-                size: 12
+                size: 11
               }
             }
           },
@@ -122,12 +125,54 @@ export class DeviceStatsComponent implements AfterViewInit, OnDestroy {
             displayColors: true,
             usePointStyle: true,
             callbacks: {
-              label: (context) => ` ${context.label}: ${context.parsed} activities`
+              label: (context: TooltipItem<'bar'>) => {
+                const device = data.devices[context.datasetIndex];
+                const percentage = device.data[context.dataIndex];
+                const count = device.counts[context.dataIndex];
+                return ` ${context.dataset.label}: ${percentage}% (${count} activities)`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            stacked: true,
+            grid: {
+              display: false
+            },
+            ticks: {
+              color: textMutedColor,
+              font: {
+                family: 'Inter, sans-serif',
+                size: 10
+              }
+            }
+          },
+          y: {
+            stacked: true,
+            beginAtZero: true,
+            max: 100,
+            grid: {
+              color: 'rgba(255, 255, 255, 0.05)'
+            },
+            ticks: {
+              color: textMutedColor,
+              callback: (value: string | number) => `${value}%`,
+              font: {
+                family: 'Inter, sans-serif',
+                size: 11
+              }
             }
           }
         }
       }
     });
+  }
+
+  private formatMonth(monthStr: string): string {
+    const [year, month] = monthStr.split('-');
+    const date = new Date(Number(year), Number(month) - 1);
+    return date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
   }
 
   private getThemeColor(variable: string): string {

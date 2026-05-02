@@ -63,9 +63,9 @@
       </a>
     </div>
 
-    @if (store.deviceStats().length > 0) {
+    @if (store.deviceMonthlyDistribution().months.length > 0) {
       <div class="mt-12 w-full max-w-4xl mx-auto">
-        <app-device-stats [data]="store.deviceStats()"></app-device-stats>
+        <app-device-stats [data]="store.deviceMonthlyDistribution()"></app-device-stats>
       </div>
     }
   </div>

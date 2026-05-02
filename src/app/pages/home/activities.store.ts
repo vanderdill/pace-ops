@@ -8,6 +8,7 @@ import { getYearlyKms } from './utils/yearly-kms.util';
 import { getDeviceStats } from './utils/device-stats.util';
 import { getYearlySessions } from './utils/yearly-sessions.util';
 import { getMonthlyHrStats } from './utils/monthly-hr-stats.util';
+import { getDeviceMonthlyDistribution } from './utils/device-monthly-stats.util';
 
 interface ActivitiesState {
   activities: StravaActivity[];
@@ -28,7 +29,8 @@ export const ActivitiesStore = signalStore(
     yearlyKms: computed(() => getYearlyKms(activities())),
     deviceStats: computed(() => getDeviceStats(activities())),
     yearlySessions: computed(() => getYearlySessions(activities())),
-    hrStats: computed(() => getMonthlyHrStats(activities()))
+    hrStats: computed(() => getMonthlyHrStats(activities())),
+    deviceMonthlyDistribution: computed(() => getDeviceMonthlyDistribution(activities()))
   })),
   withMethods((store, activitiesService = inject(ActivitiesService), dbService = inject(IndexedDbService)) => ({
     async loadActivities(forceRefresh = false) {
