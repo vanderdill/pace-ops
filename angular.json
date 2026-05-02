@@ -29,7 +29,7 @@
             ]
           },
           "configurations": {
-            "production": {
+            "gh-pages": {
               "budgets": [
                 {
                   "type": "initial",
@@ -42,7 +42,13 @@
                   "maximumError": "8kB"
                 }
               ],
-              "outputHashing": "all"
+              "outputHashing": "all",
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.gh-pages.ts"
+                }
+              ]
             },
             "development": {
               "optimization": false,
@@ -50,13 +56,13 @@
               "sourceMap": true
             }
           },
-          "defaultConfiguration": "production"
+          "defaultConfiguration": "gh-pages"
         },
         "serve": {
           "builder": "@angular/build:dev-server",
           "configurations": {
-            "production": {
-              "buildTarget": "pace-ops:build:production"
+            "gh-pages": {
+              "buildTarget": "pace-ops:build:gh-pages"
             },
             "development": {
               "buildTarget": "pace-ops:build:development",
