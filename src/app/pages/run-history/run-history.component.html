@@ -53,12 +53,12 @@
     </div>
 
     <div class="mt-8 bg-card-bg border border-white/5 rounded-3xl p-8 min-h-[500px] flex flex-col relative overflow-hidden">
-      <h2 class="text-2xl font-bold mb-6">Monthly Max Heart Rate</h2>
+      <h2 class="text-2xl font-bold mb-6">Monthly Heart Rate Trends</h2>
       <div class="grow min-h-[400px]">
-        <app-monthly-max-hr class="h-full w-full" [data]="store.monthlyMaxHr()"></app-monthly-max-hr>
+        <app-monthly-hr-stats class="h-full w-full" [data]="store.hrStats()"></app-monthly-hr-stats>
       </div>
 
-      @if (!store.isLoading() && store.monthlyMaxHr().length === 0) {
+      @if (!store.isLoading() && store.hrStats().length === 0) {
       <div class="flex flex-col items-center justify-center py-20 text-center">
         <div class="p-4 bg-white/5 rounded-full mb-4">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">

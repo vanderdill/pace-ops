@@ -1,11 +1,12 @@
 import { Component, Input, ViewChild, ElementRef, OnDestroy, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Chart, registerables, TooltipItem } from 'chart.js';
+import { MonthlyHrStats } from '../../../home/utils/monthly-hr-stats.util';
 
 Chart.register(...registerables);
 
 @Component({
-  selector: 'app-monthly-max-hr',
+  selector: 'app-monthly-hr-stats',
   standalone: true,
   imports: [CommonModule],
   template: `<canvas #hrChart class="w-full h-full"></canvas>`,
@@ -17,13 +18,13 @@ Chart.register(...registerables);
     }
   `]
 })
-export class MonthlyMaxHrComponent implements AfterViewInit, OnDestroy {
+export class MonthlyHrStatsComponent implements AfterViewInit, OnDestroy {
   @ViewChild('hrChart')
   private hrChartCanvas?: ElementRef<HTMLCanvasElement>;
 
   private chart?: Chart;
 
-  private _data: { month: string; maxHr: number }[] = [];
+  private _data: MonthlyHrStats[] = [];
 
   public ngAfterViewInit(): void {
     if (this._data.length > 0) {
@@ -38,18 +39,18 @@ export class MonthlyMaxHrComponent implements AfterViewInit, OnDestroy {
   }
 
   @Input()
-  public set data(value: { month: string; maxHr: number }[]) {
+  public set data(value: MonthlyHrStats[]) {
     this._data = value;
     if (this.hrChartCanvas) {
       this.updateChart(value);
     }
   }
 
-  public get data(): { month: string; maxHr: number }[] {
+  public get data(): MonthlyHrStats[] {
     return this._data;
   }
 
-  private updateChart(data: { month: string; maxHr: number }[]): void {
+  private updateChart(data: MonthlyHrStats[]): void {
     if (!this.hrChartCanvas) return;
 
     const ctx = this.hrChartCanvas.nativeElement.getContext('2d');
@@ -60,39 +61,83 @@ export class MonthlyMaxHrComponent implements AfterViewInit, OnDestroy {
     }
 
     const stravaColor = this.getThemeColor('--color-strava');
+    const cyanColor = '#00CED1';
     const cardBgColor = this.getThemeColor('--color-card-bg');
     const textMutedColor = this.getThemeColor('--color-text-muted');
     const textLightColor = this.getThemeColor('--color-text-light');
 
-    // Create gradient for the line
-    const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-    gradient.addColorStop(0, 'rgba(252, 76, 2, 0.4)');
-    gradient.addColorStop(1, 'rgba(252, 76, 2, 0)');
+    const labels = data.map(d => this.formatMonth(d.month));
 
     this.chart = new Chart(ctx, {
       type: 'line',
       data: {
-        labels: data.map(d => this.formatMonth(d.month)),
-        datasets: [{
-          label: 'Max Heart Rate',
-          data: data.map(d => d.maxHr),
-          borderColor: stravaColor,
-          backgroundColor: gradient,
-          fill: true,
-          tension: 0.4,
-          pointBackgroundColor: stravaColor,
-          pointBorderColor: cardBgColor,
-          pointBorderWidth: 2,
-          pointRadius: 4,
-          pointHoverRadius: 6
-        }]
+        labels: labels,
+        datasets: [
+          {
+            label: 'Max HR',
+            data: data.map(d => d.maxHr),
+            borderColor: stravaColor,
+            backgroundColor: 'transparent',
+            borderWidth: 3,
+            tension: 0.4,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            pointBackgroundColor: stravaColor,
+            pointBorderColor: cardBgColor,
+            pointBorderWidth: 2
+          },
+          {
+            label: 'Avg HR',
+            data: data.map(d => d.avgHr),
+            borderColor: cyanColor,
+            backgroundColor: 'transparent',
+            borderWidth: 3,
+            tension: 0.4,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            pointBackgroundColor: cyanColor,
+            pointBorderColor: cardBgColor,
+            pointBorderWidth: 2
+          },
+          {
+            label: 'Upper Bound',
+            data: data.map(d => d.avgHr + d.stdDev),
+            borderColor: 'transparent',
+            backgroundColor: 'rgba(0, 206, 209, 0.1)',
+            fill: false,
+            tension: 0.4,
+            pointRadius: 0,
+            pointHoverRadius: 0
+          },
+          {
+            label: 'Lower Bound',
+            data: data.map(d => d.avgHr - d.stdDev),
+            borderColor: 'transparent',
+            backgroundColor: 'rgba(0, 206, 209, 0.1)',
+            fill: '-1', // Fill to Upper Bound
+            tension: 0.4,
+            pointRadius: 0,
+            pointHoverRadius: 0
+          }
+        ]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
           legend: {
-            display: false
+            position: 'top',
+            align: 'end',
+            labels: {
+              color: textMutedColor,
+              usePointStyle: true,
+              pointStyle: 'circle',
+              filter: (item) => item.text !== 'Upper Bound' && item.text !== 'Lower Bound',
+              font: {
+                family: 'Inter, sans-serif',
+                size: 12
+              }
+            }
           },
           tooltip: {
             backgroundColor: cardBgColor,
@@ -100,10 +145,17 @@ export class MonthlyMaxHrComponent implements AfterViewInit, OnDestroy {
             bodyColor: textLightColor,
             padding: 12,
             cornerRadius: 8,
-            displayColors: false,
+            displayColors: true,
+            usePointStyle: true,
             callbacks: {
-              label: (context: TooltipItem<'line'>) => ` ${context.parsed.y} bpm`
-            }
+              label: (context: TooltipItem<'line'>) => {
+                const item = data[context.dataIndex];
+                if (context.dataset.label === 'Max HR') return ` Peak: ${item.maxHr} bpm`;
+                if (context.dataset.label === 'Avg HR') return ` Average: ${item.avgHr} bpm (±${item.stdDev})`;
+                return '';
+              }
+            },
+            filter: (item) => item.datasetIndex < 2
           }
         },
         scales: {
@@ -133,7 +185,7 @@ export class MonthlyMaxHrComponent implements AfterViewInit, OnDestroy {
               },
               callback: (value: string | number) => `${value} bpm`
             },
-            suggestedMin: 120 // Common range for running HR
+            suggestedMin: 100
           }
         }
       }

@@ -6,5 +6,6 @@ export interface StravaActivity extends SummaryActivity {
   readonly sport_type?: string;
   readonly device_name?: string;
   readonly max_heartrate?: number;
+  readonly average_heartrate?: number;
   readonly has_heartrate?: boolean;
 }
