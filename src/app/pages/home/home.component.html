@@ -64,8 +64,16 @@
     </div>
 
     @if (store.deviceMonthlyDistribution().months.length > 0) {
-      <div class="mt-12 w-full max-w-4xl mx-auto">
-        <app-device-stats [data]="store.deviceMonthlyDistribution()"></app-device-stats>
+      <div class="mt-12 w-full max-w-4xl mx-auto space-y-12">
+        <app-stacked-bar-chart 
+          title="Device Usage Trends" 
+          [data]="store.deviceMonthlyDistribution()">
+        </app-stacked-bar-chart>
+
+        <app-stacked-bar-chart 
+          title="Activity Type Trends" 
+          [data]="store.activityTypeMonthlyDistribution()">
+        </app-stacked-bar-chart>
       </div>
     }
   </div>

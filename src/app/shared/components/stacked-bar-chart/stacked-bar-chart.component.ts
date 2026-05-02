@@ -1,19 +1,19 @@
 import { Component, Input, ViewChild, ElementRef, OnDestroy, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Chart, registerables, TooltipItem } from 'chart.js';
-import { DeviceMonthlyDistribution } from '../../utils/device-monthly-stats.util';
+import { MonthlyDistribution } from '../../models/monthly-distribution.model';
 
 Chart.register(...registerables);
 
 @Component({
-  selector: 'app-device-stats',
+  selector: 'app-stacked-bar-chart',
   standalone: true,
   imports: [CommonModule],
   template: `
     <div class="bg-card-bg p-8 rounded-3xl border border-white/5 h-full flex flex-col">
-      <h3 class="text-xl font-bold mb-6">Device Usage Trends</h3>
+      <h3 class="text-xl font-bold mb-6">{{ title }}</h3>
       <div class="relative flex-1 min-h-[400px]">
-        <canvas #deviceChart></canvas>
+        <canvas #chartCanvas></canvas>
       </div>
     </div>
   `,
@@ -24,13 +24,14 @@ Chart.register(...registerables);
     }
   `]
 })
-export class DeviceStatsComponent implements AfterViewInit, OnDestroy {
-  @ViewChild('deviceChart')
-  private deviceChartCanvas?: ElementRef<HTMLCanvasElement>;
+export class StackedBarChartComponent implements AfterViewInit, OnDestroy {
+  @ViewChild('chartCanvas')
+  private chartCanvas?: ElementRef<HTMLCanvasElement>;
 
+  @Input() public title: string = 'Trends';
+  
   private chart?: Chart;
-
-  private _data?: DeviceMonthlyDistribution;
+  private _data?: MonthlyDistribution;
 
   public ngAfterViewInit(): void {
     if (this._data) {
@@ -45,21 +46,21 @@ export class DeviceStatsComponent implements AfterViewInit, OnDestroy {
   }
 
   @Input()
-  public set data(value: DeviceMonthlyDistribution) {
+  public set data(value: MonthlyDistribution | undefined) {
     this._data = value;
-    if (this.deviceChartCanvas) {
+    if (this.chartCanvas) {
       this.updateChart(value);
     }
   }
 
-  public get data(): DeviceMonthlyDistribution {
-    return this._data!;
+  public get data(): MonthlyDistribution | undefined {
+    return this._data;
   }
 
-  private updateChart(data: DeviceMonthlyDistribution): void {
-    if (!this.deviceChartCanvas || !data) return;
+  private updateChart(data: MonthlyDistribution | undefined): void {
+    if (!this.chartCanvas || !data) return;
 
-    const ctx = this.deviceChartCanvas.nativeElement.getContext('2d');
+    const ctx = this.chartCanvas.nativeElement.getContext('2d');
     if (!ctx) return;
 
     if (this.chart) {
@@ -70,7 +71,6 @@ export class DeviceStatsComponent implements AfterViewInit, OnDestroy {
     const textLightColor = this.getThemeColor('--color-text-light');
     const cardBgColor = this.getThemeColor('--color-card-bg');
 
-    // Vibrant palette
     const colors = [
       '#FC4C02', // Strava Orange
       '#00CED1', // Dark Turquoise
@@ -81,6 +81,10 @@ export class DeviceStatsComponent implements AfterViewInit, OnDestroy {
       '#1E90FF', // Dodger Blue
       '#FF9800', // Deep Orange
       '#009688', // Teal
+      '#673AB7', // Deep Purple
+      '#E91E63', // Pink
+      '#8BC34A', // Light Green
+      '#3F51B5', // Indigo
     ];
 
     const labels = data.months.map(m => this.formatMonth(m));
@@ -89,9 +93,9 @@ export class DeviceStatsComponent implements AfterViewInit, OnDestroy {
       type: 'bar',
       data: {
         labels: labels,
-        datasets: data.devices.map((device, index) => ({
-          label: device.name,
-          data: device.data,
+        datasets: data.series.map((s, index) => ({
+          label: s.name,
+          data: s.data,
           backgroundColor: colors[index % colors.length],
           borderColor: cardBgColor,
           borderWidth: 1,
@@ -126,9 +130,9 @@ export class DeviceStatsComponent implements AfterViewInit, OnDestroy {
             usePointStyle: true,
             callbacks: {
               label: (context: TooltipItem<'bar'>) => {
-                const device = data.devices[context.datasetIndex];
-                const percentage = device.data[context.dataIndex];
-                const count = device.counts[context.dataIndex];
+                const s = data.series[context.datasetIndex];
+                const percentage = s.data[context.dataIndex];
+                const count = s.counts[context.dataIndex];
                 return ` ${context.dataset.label}: ${percentage}% (${count} activities)`;
               }
             }

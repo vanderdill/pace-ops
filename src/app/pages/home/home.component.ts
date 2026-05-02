@@ -2,12 +2,12 @@ import { Component, inject, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { ActivitiesStore } from './activities.store';
-import { DeviceStatsComponent } from './components/device-stats/device-stats.component';
+import { StackedBarChartComponent } from '../../shared/components/stacked-bar-chart/stacked-bar-chart.component';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [RouterLink, DeviceStatsComponent],
+  imports: [RouterLink, StackedBarChartComponent],
   templateUrl: './home.component.html'
 })
 export class HomeComponent implements OnInit {

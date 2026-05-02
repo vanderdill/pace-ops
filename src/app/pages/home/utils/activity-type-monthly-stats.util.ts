@@ -1,36 +1,41 @@
 import { StravaActivity } from '../../../core/models/activity.model';
 import { MonthlyDistribution } from '../../../shared/models/monthly-distribution.model';
 
-export function getDeviceMonthlyDistribution(activities: StravaActivity[]): MonthlyDistribution {
+export function getActivityTypeMonthlyDistribution(activities: StravaActivity[]): MonthlyDistribution {
   const monthGroups: Record<string, Record<string, number>> = {};
-  const allDevices = new Set<string>();
+  const allTypes = new Set<string>();
   
   activities.forEach((activity) => {
     const rawDate = activity.start_date || activity.start_date_local;
     if (rawDate) {
       const date = new Date(rawDate);
       const key = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
-      const device = activity.device_name || 'Manual/Unknown';
+      let type = activity.sport_type || activity.type || 'Unknown';
       
-      allDevices.add(device);
+      // Merge types as requested
+      if (type === 'Racquetball') type = 'Tennis';
+      if (type === 'VirtualRun') type = 'Run';
+      if (type === 'WeightTraining') type = 'Workout';
+      
+      allTypes.add(type);
       
       if (!monthGroups[key]) {
         monthGroups[key] = {};
       }
-      monthGroups[key][device] = (monthGroups[key][device] || 0) + 1;
+      monthGroups[key][type] = (monthGroups[key][type] || 0) + 1;
     }
   });
 
   const sortedMonths = Object.keys(monthGroups).sort();
-  const sortedDevices = Array.from(allDevices).sort();
+  const sortedTypes = Array.from(allTypes).sort();
 
-  const series = sortedDevices.map(deviceName => {
+  const series = sortedTypes.map(typeName => {
     const data: number[] = [];
     const counts: number[] = [];
 
     sortedMonths.forEach(month => {
       const monthData = monthGroups[month];
-      const count = monthData[deviceName] || 0;
+      const count = monthData[typeName] || 0;
       const total = Object.values(monthData).reduce((a, b) => a + b, 0);
       
       counts.push(count);
@@ -38,7 +43,7 @@ export function getDeviceMonthlyDistribution(activities: StravaActivity[]): Mont
     });
 
     return {
-      name: deviceName,
+      name: typeName,
       data,
       counts
     };

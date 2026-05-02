@@ -9,6 +9,7 @@ import { getDeviceStats } from './utils/device-stats.util';
 import { getYearlySessions } from './utils/yearly-sessions.util';
 import { getMonthlyHrStats } from './utils/monthly-hr-stats.util';
 import { getDeviceMonthlyDistribution } from './utils/device-monthly-stats.util';
+import { getActivityTypeMonthlyDistribution } from './utils/activity-type-monthly-stats.util';
 
 interface ActivitiesState {
   activities: StravaActivity[];
@@ -31,7 +32,8 @@ export const ActivitiesStore = signalStore(
     yearlySessions: computed(() => getYearlySessions(activities())),
     hrStats: computed(() => getMonthlyHrStats(activities(), ['Run'])),
     gymHrStats: computed(() => getMonthlyHrStats(activities(), ['WeightTraining', 'Crossfit', 'HighIntensityIntervalTraining', 'Workout'])),
-    deviceMonthlyDistribution: computed(() => getDeviceMonthlyDistribution(activities()))
+    deviceMonthlyDistribution: computed(() => getDeviceMonthlyDistribution(activities())),
+    activityTypeMonthlyDistribution: computed(() => getActivityTypeMonthlyDistribution(activities()))
   })),
   withMethods((store, activitiesService = inject(ActivitiesService), dbService = inject(IndexedDbService)) => ({
     async loadActivities(forceRefresh = false) {
