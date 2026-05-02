@@ -1,55 +1,34 @@
 import { signalStore, withState, withMethods, withComputed, patchState } from '@ngrx/signals';
 import { inject, computed } from '@angular/core';
-import { ActivitiesService, SummaryActivity } from '@strava/index';
+import { ActivitiesService } from '@strava/index';
 import { IndexedDbService } from '../../core/storage/indexed-db.service';
 import { firstValueFrom } from 'rxjs';
+import { StravaActivity } from '../../core/models/activity.model';
+import { getYearlyKms } from './utils/yearly-kms.util';
+import { getDeviceStats } from './utils/device-stats.util';
+import { getYearlySessions } from './utils/yearly-sessions.util';
+import { getMonthlyMaxHr } from './utils/monthly-max-hr.util';
 
-interface StravaActivity extends SummaryActivity {
-  readonly start_date?: string;
-  readonly start_date_local?: string;
-  readonly sport_type?: string;
-}
-
-interface GymHistoryState {
+interface ActivitiesState {
   activities: StravaActivity[];
   isLoading: boolean;
   error: string | null;
 }
 
-const initialState: GymHistoryState = {
+const initialState: ActivitiesState = {
   activities: [],
   isLoading: false,
   error: null,
 };
 
-export const GymHistoryStore = signalStore(
+export const ActivitiesStore = signalStore(
   { providedIn: 'root' },
   withState(initialState),
   withComputed(({ activities }) => ({
-    yearlySessions: computed(() => {
-      const data: Record<number, number> = {};
-      const gymSports = ['WeightTraining', 'Crossfit', 'HighIntensityIntervalTraining', 'Workout'];
-      
-      activities().forEach((activity) => {
-        const isGym = gymSports.includes(activity.type || '') || 
-                      gymSports.includes(activity.sport_type || '') || 
-                      gymSports.includes(activity.sportType || '');
-        
-        if (isGym) {
-          const rawDate = activity.start_date || activity.start_date_local || activity.startDate;
-          if (rawDate) {
-            const year = new Date(rawDate).getFullYear();
-            if (!isNaN(year)) {
-              data[year] = (data[year] || 0) + 1;
-            }
-          }
-        }
-      });
-      
-      return Object.entries(data)
-        .map(([year, count]) => ({ year: Number(year), count }))
-        .sort((a, b) => a.year - b.year);
-    })
+    yearlyKms: computed(() => getYearlyKms(activities())),
+    deviceStats: computed(() => getDeviceStats(activities())),
+    yearlySessions: computed(() => getYearlySessions(activities())),
+    monthlyMaxHr: computed(() => getMonthlyMaxHr(activities()))
   })),
   withMethods((store, activitiesService = inject(ActivitiesService), dbService = inject(IndexedDbService)) => ({
     async loadActivities(forceRefresh = false) {
@@ -83,7 +62,7 @@ export const GymHistoryStore = signalStore(
         
         if (activities.length === 0) break;
         
-        allActivities = [...allActivities, ...(activities as StravaActivity[])];
+        allActivities = [...allActivities, ...activities as StravaActivity[]];
         page++;
         
         if (page > 100) break; 

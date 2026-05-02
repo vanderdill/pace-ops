@@ -40,7 +40,7 @@
       }
 
       <div class="flex-grow min-h-[400px]">
-        <canvas #historyChart></canvas>
+        <app-yearly-session [data]="store.yearlySessions()"></app-yearly-session>
       </div>
       
       @if (!store.isLoading() && store.yearlySessions().length === 0) {

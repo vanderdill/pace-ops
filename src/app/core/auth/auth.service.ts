@@ -27,7 +27,7 @@ export class AuthService {
   private readonly EXPIRES_AT_KEY = 'strava_expires_at';
   private readonly ATHLETE_KEY = 'strava_athlete';
 
-  protected readonly athlete = signal<DetailedAthlete | null>(this.getStoredAthlete());
+  protected readonly athlete = signal<RawDetailedAthlete | null>(this.getStoredAthlete());
 
   public login(): void {
     const params = new URLSearchParams({
@@ -82,25 +82,19 @@ export class AuthService {
     return Number(expiresAt) * 1000 > Date.now();
   }
 
-  public getAthlete(): Signal<DetailedAthlete | null> {
+  public getAthlete(): Signal<RawDetailedAthlete | null> {
     return this.athlete.asReadonly();
   }
 
   private saveTokens(response: StravaTokenResponse): void {
-    // Map raw snake_case response to camelCase interface
-    const mappedAthlete: DetailedAthlete = {
-      ...response.athlete,
-      profileMedium: response.athlete.profile_medium,
-    };
-
     localStorage.setItem(this.ACCESS_TOKEN_KEY, response.access_token);
     localStorage.setItem(this.REFRESH_TOKEN_KEY, response.refresh_token);
     localStorage.setItem(this.EXPIRES_AT_KEY, response.expires_at.toString());
-    localStorage.setItem(this.ATHLETE_KEY, JSON.stringify(mappedAthlete));
-    this.athlete.set(mappedAthlete);
+    localStorage.setItem(this.ATHLETE_KEY, JSON.stringify(response.athlete));
+    this.athlete.set(response.athlete);
   }
 
-  private getStoredAthlete(): DetailedAthlete | null {
+  private getStoredAthlete(): RawDetailedAthlete | null {
     const stored = localStorage.getItem(this.ATHLETE_KEY);
     return stored ? JSON.parse(stored) : null;
   }

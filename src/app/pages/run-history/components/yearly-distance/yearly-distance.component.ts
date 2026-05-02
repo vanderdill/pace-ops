@@ -1,40 +1,34 @@
-import { Component, inject, OnInit, ViewChild, ElementRef, effect, AfterViewInit, OnDestroy } from '@angular/core';
+import { Component, Input, ViewChild, ElementRef, OnDestroy, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
-import { YourHistoryStore } from './your-history.store';
 import { Chart, registerables, TooltipItem } from 'chart.js';
 
 Chart.register(...registerables);
 
 @Component({
-  selector: 'app-your-history',
+  selector: 'app-yearly-distance',
   standalone: true,
-  imports: [CommonModule, RouterLink],
-  templateUrl: './your-history.component.html'
+  imports: [CommonModule],
+  template: `<canvas #distanceChart class="w-full h-full"></canvas>`,
+  styles: [`
+    :host {
+      display: block;
+      height: 100%;
+      width: 100%;
+    }
+  `]
 })
-export class YourHistoryComponent implements OnInit, AfterViewInit, OnDestroy {
-  @ViewChild('historyChart')
-  private historyChartCanvas?: ElementRef<HTMLCanvasElement>;
+export class YearlyDistanceComponent implements AfterViewInit, OnDestroy {
+  @ViewChild('distanceChart')
+  private distanceChartCanvas?: ElementRef<HTMLCanvasElement>;
 
-  protected readonly store = inject(YourHistoryStore);
-  
   private chart?: Chart;
 
-  constructor() {
-    effect(() => {
-      const data = this.store.yearlyKms();
-      if (data.length > 0) {
-        this.updateChart(data);
-      }
-    });
-  }
-
-  public ngOnInit(): void {
-    this.store.loadActivities();
-  }
+  private _data: { year: number; distance: number }[] = [];
 
   public ngAfterViewInit(): void {
-    // Chart will be initialized when data arrives via effect
+    if (this._data.length > 0) {
+      this.updateChart(this._data);
+    }
   }
 
   public ngOnDestroy(): void {
@@ -43,15 +37,32 @@ export class YourHistoryComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  private updateChart(data: { year: number; distance: number }[]): void {
-    if (!this.historyChartCanvas) return;
+  @Input()
+  public set data(value: { year: number; distance: number }[]) {
+    this._data = value;
+    if (this.distanceChartCanvas) {
+      this.updateChart(value);
+    }
+  }
 
-    const ctx = this.historyChartCanvas.nativeElement.getContext('2d');
+  public get data(): { year: number; distance: number }[] {
+    return this._data;
+  }
+
+  private updateChart(data: { year: number; distance: number }[]): void {
+    if (!this.distanceChartCanvas) return;
+
+    const ctx = this.distanceChartCanvas.nativeElement.getContext('2d');
     if (!ctx) return;
 
     if (this.chart) {
       this.chart.destroy();
     }
+
+    const stravaColor = this.getThemeColor('--color-strava');
+    const cardBgColor = this.getThemeColor('--color-card-bg');
+    const textMutedColor = this.getThemeColor('--color-text-muted');
+    const textLightColor = this.getThemeColor('--color-text-light');
 
     this.chart = new Chart(ctx, {
       type: 'bar',
@@ -60,7 +71,7 @@ export class YourHistoryComponent implements OnInit, AfterViewInit, OnDestroy {
         datasets: [{
           label: 'Total Kilometers',
           data: data.map(d => d.distance),
-          backgroundColor: '#fc4c02', // Strava Orange
+          backgroundColor: stravaColor,
           borderRadius: 8,
           borderSkipped: false,
         }]
@@ -73,9 +84,9 @@ export class YourHistoryComponent implements OnInit, AfterViewInit, OnDestroy {
             display: false
           },
           tooltip: {
-            backgroundColor: '#1e293b',
+            backgroundColor: cardBgColor,
             titleColor: '#fff',
-            bodyColor: '#cbd5e1',
+            bodyColor: textLightColor,
             padding: 12,
             cornerRadius: 8,
             displayColors: false,
@@ -90,7 +101,7 @@ export class YourHistoryComponent implements OnInit, AfterViewInit, OnDestroy {
               display: false
             },
             ticks: {
-              color: '#94a3b8',
+              color: textMutedColor,
               font: {
                 family: 'Inter, sans-serif',
                 size: 12,
@@ -103,7 +114,7 @@ export class YourHistoryComponent implements OnInit, AfterViewInit, OnDestroy {
               color: 'rgba(255, 255, 255, 0.05)'
             },
             ticks: {
-              color: '#94a3b8',
+              color: textMutedColor,
               font: {
                 family: 'Inter, sans-serif',
                 size: 12
@@ -114,5 +125,9 @@ export class YourHistoryComponent implements OnInit, AfterViewInit, OnDestroy {
         }
       }
     });
+  }
+
+  private getThemeColor(variable: string): string {
+    return getComputedStyle(document.documentElement).getPropertyValue(variable).trim();
   }
 }
