@@ -1,7 +1,7 @@
 import { Component, Input, ViewChild, ElementRef, OnDestroy, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Chart, registerables, TooltipItem } from 'chart.js';
-import { MonthlyHrStats } from '../../../home/utils/monthly-hr-stats.util';
+import { MonthlyHrStats } from '../../../pages/home/utils/monthly-hr-stats.util';
 
 Chart.register(...registerables);
 

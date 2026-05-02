@@ -29,7 +29,8 @@ export const ActivitiesStore = signalStore(
     yearlyKms: computed(() => getYearlyKms(activities())),
     deviceStats: computed(() => getDeviceStats(activities())),
     yearlySessions: computed(() => getYearlySessions(activities())),
-    hrStats: computed(() => getMonthlyHrStats(activities())),
+    hrStats: computed(() => getMonthlyHrStats(activities(), ['Run'])),
+    gymHrStats: computed(() => getMonthlyHrStats(activities(), ['WeightTraining', 'Crossfit', 'HighIntensityIntervalTraining', 'Workout'])),
     deviceMonthlyDistribution: computed(() => getDeviceMonthlyDistribution(activities()))
   })),
   withMethods((store, activitiesService = inject(ActivitiesService), dbService = inject(IndexedDbService)) => ({

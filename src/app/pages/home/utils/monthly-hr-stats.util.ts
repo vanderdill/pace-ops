@@ -7,13 +7,16 @@ export interface MonthlyHrStats {
   stdDev: number;
 }
 
-export function getMonthlyHrStats(activities: StravaActivity[]): MonthlyHrStats[] {
+export function getMonthlyHrStats(activities: StravaActivity[], sportTypes?: string[]): MonthlyHrStats[] {
   const monthGroups: Record<string, number[]> = {};
   
+  const matchesFilter = (activity: StravaActivity) => {
+    if (!sportTypes) return true;
+    return sportTypes.includes(activity.type || '') || sportTypes.includes(activity.sport_type || '');
+  };
+
   activities.forEach((activity) => {
-    const isRun = activity.type === 'Run' || activity.sport_type === 'Run';
-    
-    if (isRun && activity.has_heartrate && activity.average_heartrate) {
+    if (matchesFilter(activity) && activity.has_heartrate && activity.average_heartrate) {
       const rawDate = activity.start_date || activity.start_date_local;
       if (rawDate) {
         const date = new Date(rawDate);
@@ -32,8 +35,7 @@ export function getMonthlyHrStats(activities: StravaActivity[]): MonthlyHrStats[
   // Also need max_heartrate for the max metric
   const maxHrByMonth: Record<string, number> = {};
   activities.forEach((activity) => {
-    const isRun = activity.type === 'Run' || activity.sport_type === 'Run';
-    if (isRun && activity.has_heartrate && activity.max_heartrate) {
+    if (matchesFilter(activity) && activity.has_heartrate && activity.max_heartrate) {
       const rawDate = activity.start_date || activity.start_date_local;
       if (rawDate) {
         const date = new Date(rawDate);
