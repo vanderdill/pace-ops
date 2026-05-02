@@ -2,13 +2,13 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ActivitiesStore } from '../home/activities.store';
-import { YearlySessionComponent } from './components/yearly-session/yearly-session.component';
-import { MonthlyHrStatsComponent } from '../../shared/components/monthly-hr-stats/monthly-hr-stats.component';
+import { YearlySessionChartComponent } from './components/yearly-session-chart/yearly-session-chart.component';
+import { MonthlyHrStatsChartComponent } from '../../shared/components/monthly-hr-stats-chart/monthly-hr-stats-chart.component';
 
 @Component({
   selector: 'app-gym-history',
   standalone: true,
-  imports: [CommonModule, RouterLink, YearlySessionComponent, MonthlyHrStatsComponent],
+  imports: [CommonModule, RouterLink, YearlySessionChartComponent, MonthlyHrStatsChartComponent],
   templateUrl: './gym-history.component.html'
 })
 export class GymHistoryComponent implements OnInit {

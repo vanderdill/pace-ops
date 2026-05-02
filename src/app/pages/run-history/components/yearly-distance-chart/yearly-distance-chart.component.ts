@@ -5,10 +5,10 @@ import { Chart, registerables, TooltipItem } from 'chart.js';
 Chart.register(...registerables);
 
 @Component({
-  selector: 'app-yearly-session',
+  selector: 'app-yearly-distance-chart',
   standalone: true,
   imports: [CommonModule],
-  template: `<canvas #historyChart class="w-full h-full"></canvas>`,
+  template: `<canvas #distanceChart class="w-full h-full"></canvas>`,
   styles: [`
     :host {
       display: block;
@@ -17,13 +17,13 @@ Chart.register(...registerables);
     }
   `]
 })
-export class YearlySessionComponent implements AfterViewInit, OnDestroy {
-  @ViewChild('historyChart')
-  private historyChartCanvas?: ElementRef<HTMLCanvasElement>;
+export class YearlyDistanceChartComponent implements AfterViewInit, OnDestroy {
+  @ViewChild('distanceChart')
+  private distanceChartCanvas?: ElementRef<HTMLCanvasElement>;
 
   private chart?: Chart;
 
-  private _data: { year: number; count: number }[] = [];
+  private _data: { year: number; distance: number }[] = [];
 
   public ngAfterViewInit(): void {
     if (this._data.length > 0) {
@@ -38,28 +38,28 @@ export class YearlySessionComponent implements AfterViewInit, OnDestroy {
   }
 
   @Input()
-  public set data(value: { year: number; count: number }[]) {
+  public set data(value: { year: number; distance: number }[]) {
     this._data = value;
-    if (this.historyChartCanvas) {
+    if (this.distanceChartCanvas) {
       this.updateChart(value);
     }
   }
 
-  public get data(): { year: number; count: number }[] {
+  public get data(): { year: number; distance: number }[] {
     return this._data;
   }
 
-  private updateChart(data: { year: number; count: number }[]): void {
-    if (!this.historyChartCanvas) return;
+  private updateChart(data: { year: number; distance: number }[]): void {
+    if (!this.distanceChartCanvas) return;
 
-    const ctx = this.historyChartCanvas.nativeElement.getContext('2d');
+    const ctx = this.distanceChartCanvas.nativeElement.getContext('2d');
     if (!ctx) return;
 
     if (this.chart) {
       this.chart.destroy();
     }
 
-    const gymColor = this.getThemeColor('--color-gym');
+    const stravaColor = this.getThemeColor('--color-strava');
     const cardBgColor = this.getThemeColor('--color-card-bg');
     const textMutedColor = this.getThemeColor('--color-text-muted');
     const textLightColor = this.getThemeColor('--color-text-light');
@@ -69,9 +69,9 @@ export class YearlySessionComponent implements AfterViewInit, OnDestroy {
       data: {
         labels: data.map(d => d.year.toString()),
         datasets: [{
-          label: 'Total Sessions',
-          data: data.map(d => d.count),
-          backgroundColor: gymColor,
+          label: 'Total Kilometers',
+          data: data.map(d => d.distance),
+          backgroundColor: stravaColor,
           borderRadius: 8,
           borderSkipped: false,
         }]
@@ -91,7 +91,7 @@ export class YearlySessionComponent implements AfterViewInit, OnDestroy {
             cornerRadius: 8,
             displayColors: false,
             callbacks: {
-              label: (context: TooltipItem<'bar'>) => ` ${context.parsed.y} sessions`
+              label: (context: TooltipItem<'bar'>) => ` ${context.parsed.y} km`
             }
           }
         },
@@ -119,7 +119,7 @@ export class YearlySessionComponent implements AfterViewInit, OnDestroy {
                 family: 'Inter, sans-serif',
                 size: 12
               },
-              callback: (value: string | number) => `${value} sessions`
+              callback: (value: string | number) => `${value} km`
             }
           }
         }

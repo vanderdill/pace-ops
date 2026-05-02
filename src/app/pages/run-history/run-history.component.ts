@@ -2,13 +2,13 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ActivitiesStore } from '../home/activities.store';
-import { YearlyDistanceComponent } from './components/yearly-distance/yearly-distance.component';
-import { MonthlyHrStatsComponent } from '../../shared/components/monthly-hr-stats/monthly-hr-stats.component';
+import { YearlyDistanceChartComponent } from './components/yearly-distance-chart/yearly-distance-chart.component';
+import { MonthlyHrStatsChartComponent } from '../../shared/components/monthly-hr-stats-chart/monthly-hr-stats-chart.component';
 
 @Component({
   selector: 'app-run-history',
   standalone: true,
-  imports: [CommonModule, RouterLink, YearlyDistanceComponent, MonthlyHrStatsComponent],
+  imports: [CommonModule, RouterLink, YearlyDistanceChartComponent, MonthlyHrStatsChartComponent],
   templateUrl: './run-history.component.html'
 })
 export class RunHistoryComponent implements OnInit {

@@ -6,7 +6,7 @@ import { MonthlyHrStats } from '../../../pages/home/utils/monthly-hr-stats.util'
 Chart.register(...registerables);
 
 @Component({
-  selector: 'app-monthly-hr-stats',
+  selector: 'app-monthly-hr-stats-chart',
   standalone: true,
   imports: [CommonModule],
   template: `<canvas #hrChart class="w-full h-full"></canvas>`,
@@ -18,7 +18,7 @@ Chart.register(...registerables);
     }
   `]
 })
-export class MonthlyHrStatsComponent implements AfterViewInit, OnDestroy {
+export class MonthlyHrStatsChartComponent implements AfterViewInit, OnDestroy {
   @ViewChild('hrChart')
   private hrChartCanvas?: ElementRef<HTMLCanvasElement>;
 

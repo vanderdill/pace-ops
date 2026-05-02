@@ -40,7 +40,7 @@
       }
 
       <div class="flex-grow min-h-[400px]">
-        <app-yearly-session [data]="store.yearlySessions()"></app-yearly-session>
+        <app-yearly-session-chart [data]="store.yearlySessions()"></app-yearly-session-chart>
       </div>
       
       @if (!store.isLoading() && store.yearlySessions().length === 0) {
@@ -59,7 +59,7 @@
     <div class="mt-8 bg-card-bg border border-white/5 rounded-3xl p-8 min-h-[500px] flex flex-col relative overflow-hidden">
       <h2 class="text-2xl font-bold mb-6">Monthly Heart Rate Trends</h2>
       <div class="grow min-h-[400px]">
-        <app-monthly-hr-stats class="h-full w-full" [data]="store.gymHrStats()"></app-monthly-hr-stats>
+        <app-monthly-hr-stats-chart class="h-full w-full" [data]="store.gymHrStats()"></app-monthly-hr-stats-chart>
       </div>
 
       @if (!store.isLoading() && store.gymHrStats().length === 0) {
