@@ -1,0 +1,9 @@
+@import "tailwindcss";
+
+@theme {
+  --color-strava: #fc4c02;
+  --color-strava-hover: #e34402;
+  --color-app-bg: #0f172a;
+  --color-card-bg: #1e293b;
+  --color-text-muted: #94a3b8;
+}

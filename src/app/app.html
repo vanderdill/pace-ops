@@ -1,0 +1,22 @@
+<div class=" mx-auto px-6 min-h-screen bg-app-bg text-slate-50 font-sans">
+  <header class="flex justify-between items-center py-8 border-b border-white/5">
+    <div class="text-2xl font-extrabold tracking-tight">
+      <span>PACE</span><span class="text-strava">OPS</span>
+    </div>
+
+    @if (athlete(); as a) {
+    <div class="flex items-center gap-4 px-4 py-2 bg-white/5 rounded-full">
+      <img class="w-10 h-10 rounded-full border-2 border-strava"
+           alt="Profile"
+           [src]="a.profileMedium">
+      <div class="flex flex-col">
+        <span class="font-semibold text-sm">{{ a.firstname }} {{ a.lastname }}</span>
+        <button class="text-left text-xs text-text-muted hover:text-strava transition-colors"
+                (click)="logout()">Logout</button>
+      </div>
+    </div>
+    }
+  </header>
+
+  <router-outlet />
+</div>

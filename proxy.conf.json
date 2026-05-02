@@ -1,0 +1,7 @@
+{
+  "/oauth/token": {
+    "target": "https://www.strava.com",
+    "secure": true,
+    "changeOrigin": true
+  }
+}
