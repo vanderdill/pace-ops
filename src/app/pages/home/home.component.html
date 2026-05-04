@@ -74,6 +74,11 @@
           title="Activity Type Trends" 
           [data]="store.activityTypeMonthlyDistribution()">
         </app-stacked-bar-chart>
+
+        <app-stacked-bar-chart 
+          title="Running Gear Trends" 
+          [data]="store.gearMonthlyDistribution()">
+        </app-stacked-bar-chart>
       </div>
     }
   </div>

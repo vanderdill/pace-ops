@@ -10,15 +10,19 @@ import { getYearlySessions } from './utils/yearly-sessions.util';
 import { getMonthlyHrStats } from './utils/monthly-hr-stats.util';
 import { getDeviceMonthlyDistribution } from './utils/device-monthly-stats.util';
 import { getActivityTypeMonthlyDistribution } from './utils/activity-type-monthly-stats.util';
+import { getGearMonthlyDistribution } from './utils/gear-monthly-stats.util';
+import { GearsService } from '@strava/index';
 
 interface ActivitiesState {
   activities: StravaActivity[];
+  gearNames: Record<string, string>;
   isLoading: boolean;
   error: string | null;
 }
 
 const initialState: ActivitiesState = {
   activities: [],
+  gearNames: {},
   isLoading: false,
   error: null,
 };
@@ -26,16 +30,24 @@ const initialState: ActivitiesState = {
 export const ActivitiesStore = signalStore(
   { providedIn: 'root' },
   withState(initialState),
-  withComputed(({ activities }) => ({
-    yearlyKms: computed(() => getYearlyKms(activities())),
-    deviceStats: computed(() => getDeviceStats(activities())),
-    yearlySessions: computed(() => getYearlySessions(activities())),
-    hrStats: computed(() => getMonthlyHrStats(activities(), ['Run'])),
-    gymHrStats: computed(() => getMonthlyHrStats(activities(), ['WeightTraining', 'Crossfit', 'HighIntensityIntervalTraining', 'Workout'])),
-    deviceMonthlyDistribution: computed(() => getDeviceMonthlyDistribution(activities())),
-    activityTypeMonthlyDistribution: computed(() => getActivityTypeMonthlyDistribution(activities()))
-  })),
-  withMethods((store, activitiesService = inject(ActivitiesService), dbService = inject(IndexedDbService)) => ({
+  withComputed((store) => {
+    return {
+      yearlyKms: computed(() => getYearlyKms(store.activities())),
+      deviceStats: computed(() => getDeviceStats(store.activities())),
+      yearlySessions: computed(() => getYearlySessions(store.activities())),
+      hrStats: computed(() => getMonthlyHrStats(store.activities(), ['Run'])),
+      gymHrStats: computed(() => getMonthlyHrStats(store.activities(), ['WeightTraining', 'Crossfit', 'HighIntensityIntervalTraining', 'Workout'])),
+      deviceMonthlyDistribution: computed(() => getDeviceMonthlyDistribution(store.activities())),
+      activityTypeMonthlyDistribution: computed(() => getActivityTypeMonthlyDistribution(store.activities())),
+      gearMonthlyDistribution: computed(() => {
+        const runActivities = store.activities().filter(a => 
+          ['Run', 'TrailRun', 'VirtualRun'].includes(a.sport_type || '')
+        );
+        return getGearMonthlyDistribution(runActivities, store.gearNames());
+      })
+    };
+  }),
+  withMethods((store, activitiesService = inject(ActivitiesService), gearsService = inject(GearsService), dbService = inject(IndexedDbService)) => ({
     async loadActivities(forceRefresh = false) {
       patchState(store, { isLoading: true, error: null });
       
@@ -49,9 +61,42 @@ export const ActivitiesStore = signalStore(
         }
         
         patchState(store, { activities: activities as StravaActivity[], isLoading: false });
+
+        // Load gear names for runs
+        const runActivities = (activities as StravaActivity[]).filter(a => 
+          ['Run', 'TrailRun', 'VirtualRun'].includes(a.sport_type || '')
+        );
+        const gearIds = Array.from(new Set(runActivities.map(a => a.gear_id).filter(id => !!id))) as string[];
+        if (gearIds.length > 0) {
+          await this.loadGearNames(gearIds);
+        }
       } catch (e: unknown) {
         const error = e instanceof Error ? e.message : 'Failed to load activities';
         patchState(store, { isLoading: false, error });
+      }
+    },
+
+    async loadGearNames(gearIds: string[]) {
+      const currentGearNames = store.gearNames();
+      const idsToFetch = gearIds.filter(id => id && !currentGearNames[id]);
+      
+      if (idsToFetch.length === 0) return;
+
+      try {
+        const newGearNames = { ...currentGearNames };
+        const results = await Promise.all(
+          idsToFetch.map(id => firstValueFrom(gearsService.getGearById(id)))
+        );
+
+        results.forEach(gear => {
+          if (gear.id && gear.name) {
+            newGearNames[gear.id] = gear.name;
+          }
+        });
+
+        patchState(store, { gearNames: newGearNames });
+      } catch (e) {
+        console.error('Failed to load gear names', e);
       }
     },
 
